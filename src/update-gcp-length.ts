@@ -3,7 +3,7 @@ import { type GCPLengthCache, i18nGS1Init, PrefixManager } from "@aidc-toolkit/g
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const DATA_DIRECTORY = "data";
+const DATA_DIRECTORY = "docs";
 
 const BINARY_DATE_TIME_PATH = path.resolve(DATA_DIRECTORY, "gcp-length-date-time.txt");
 
