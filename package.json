@@ -1,0 +1,35 @@
+{
+  "name": "@aidc-toolkit/data",
+  "version": "1.0.32-alpha",
+  "description": "Data manager for AIDC Toolkit",
+  "type": "module",
+  "private": true,
+  "homepage": "https://aidc-toolkit.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aidc-toolkit/data.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aidc-toolkit/data/issues"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Kevin Dean",
+    "email": "Kevin.Dean@datadevelopment.com",
+    "url": "https://www.linkedin.com/in/kdean"
+  },
+  "scripts": {
+    "update-gcp-length": "tsx src/update-gcp-length.ts",
+    "lint": "eslint",
+    "tsc:core": "tsc --project tsconfig-src.json",
+    "build:core": "npm run tsc:core -- --noEmit && npm run update-gcp-length",
+    "build:dev": "npm run build:core",
+    "build:release": "npm run build:core"
+  },
+  "devDependencies": {
+    "@aidc-toolkit/dev": "1.0.32-alpha.202512211159"
+  },
+  "dependencies": {
+    "@aidc-toolkit/gs1": "1.0.32-alpha.202512211209"
+  }
+}
