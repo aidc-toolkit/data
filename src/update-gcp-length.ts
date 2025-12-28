@@ -1,3 +1,5 @@
+/* eslint-disable no-console -- Console application. */
+
 import { I18nEnvironments } from "@aidc-toolkit/core";
 import { GCPLengthCache, i18nGS1Init, PrefixManager } from "@aidc-toolkit/gs1";
 import * as fs from "node:fs";
@@ -12,6 +14,19 @@ const BINARY_DATA_PATH = path.resolve(DATA_DIRECTORY, "gcp-length.bin");
 const JSON_DATA_PATH = path.resolve(DATA_DIRECTORY, "gcp-length.json");
 
 const gcpLengthCache = new class extends GCPLengthCache {
+    /**
+     * Log the date/time of the cache or source.
+     *
+     * @param type
+     * Type (cache or source).
+     *
+     * @param dateTime
+     * Date/time.
+     */
+    #logDateTime(type: string, dateTime: Date | undefined): void {
+        console.log(`${type} date/time is ${dateTime?.toISOString()}.`);
+    }
+
     /**
      * @inheritDoc
      */
@@ -31,6 +46,8 @@ const gcpLengthCache = new class extends GCPLengthCache {
             dateTime = undefined;
         }
 
+        this.#logDateTime("Cache", dateTime);
+
         return dateTime;
     }
 
@@ -46,11 +63,15 @@ const gcpLengthCache = new class extends GCPLengthCache {
      */
     get sourceDateTime(): Date {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- File format is known.
-        return new Date((JSON.parse(fs.readFileSync(JSON_DATA_PATH).toString()) as {
+        const dateTime = new Date((JSON.parse(fs.readFileSync(JSON_DATA_PATH).toString()) as {
             GCPPrefixFormatList: {
                 date: string;
             };
         }).GCPPrefixFormatList.date);
+
+        this.#logDateTime("Source", dateTime);
+
+        return dateTime;
     }
 
     /**
@@ -71,12 +92,13 @@ const gcpLengthCache = new class extends GCPLengthCache {
         if (cacheData !== undefined) {
             fs.writeFileSync(BINARY_DATA_PATH, cacheData);
         }
+
+        console.log(cacheDateTime !== undefined || cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
     }
 }();
 
 i18nGS1Init(I18nEnvironments.CLI).then(async () => {
     await PrefixManager.loadGCPLengthData(gcpLengthCache);
 }).catch((e: unknown) => {
-    // eslint-disable-next-line no-console -- Console application.
     console.error(e);
 });
