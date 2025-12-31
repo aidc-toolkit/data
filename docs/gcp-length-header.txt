@@ -1,0 +1,12 @@
+2025-12-22T20:41:04.937Z
+Copyright © 2025 GS1 AISBL. GS1 and the GS1 logo are registered trademarks of GS1 AISBL. As of December 2025, the GCP length table will be password-protected. If you require access, notify us via https://gs1.wufoo.com/forms/gcp-length-table-request-for-access/ Questions and further info: craig.alan.repec@gs1.org
+
+DISCLAIMER
+
+THIS DOCUMENT IS PROVIDED “AS IS” WITH NO WARRANTIES WHATSOEVER, INCLUDING ANY WARRANTY OF MERCHANTABILITY, NONINFRINGMENT, FITNESS FOR PARTICULAR PURPOSE, OR ANY WARRANTY OTHER WISE ARISING OUT OF THIS DOCUMENT.
+
+GS1 disclaims all liability for any damages arising from use or misuse of this document, whether special, indirect, consequential, or compensatory damages, and including liability for infringement of any intellectual property rights, relating to use of information in or reliance upon this document.
+
+GS1 retains the right to make changes to this document at any time, without notice.
+
+GS1 makes no warranty for the use of this document and assumes no responsibility for any errors which may appear in the document, nor does it make a commitment to update the information contained herein.

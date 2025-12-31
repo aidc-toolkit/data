@@ -1,19 +1,64 @@
 /* eslint-disable no-console -- Console application. */
 
 import { I18nEnvironments } from "@aidc-toolkit/core";
-import { GCPLengthCache, i18nGS1Init, PrefixManager } from "@aidc-toolkit/gs1";
+import {
+    GCPLengthCache,
+    type GCPLengthData,
+    type GCPLengthHeader,
+    i18nGS1Init,
+    PrefixManager,
+    RemoteGCPLengthCache
+} from "@aidc-toolkit/gs1";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
 const DATA_DIRECTORY = "docs";
 
-const BINARY_DATE_TIME_PATH = path.resolve(DATA_DIRECTORY, "gcp-length-date-time.txt");
+const BINARY_HEADER_PATH = path.resolve(DATA_DIRECTORY, RemoteGCPLengthCache.SOURCE_HEADER_FILE_NAME);
 
-const BINARY_DATA_PATH = path.resolve(DATA_DIRECTORY, "gcp-length.bin");
+const BINARY_DATA_PATH = path.resolve(DATA_DIRECTORY, RemoteGCPLengthCache.SOURCE_DATA_FILE_NAME);
 
 const JSON_DATA_PATH = path.resolve(DATA_DIRECTORY, "gcp-length.json");
 
+/**
+ * Parse the GS1 Company Prefix length header.
+ *
+ * @param s
+ * Multi-line string containing the header.
+ *
+ * @returns
+ * GS1 Company Prefix length header.
+ */
+export function parseGCPLengthHeader(s: string): GCPLengthHeader {
+    const lines = s.split("\n");
+
+    return {
+        dateTime: new Date(lines[0]),
+        disclaimer: lines.slice(1).join("\n")
+    };
+}
+
 const gcpLengthCache = new class extends GCPLengthCache {
+    #gcpLengthData?: GCPLengthData;
+
+    /**
+     * Load GS1 Company Prefix length data if available.
+     */
+    #loadGCPLengthData(): void {
+        try {
+            const lines = fs.readFileSync(BINARY_HEADER_PATH).toString().split("\n");
+            const data = fs.readFileSync(BINARY_DATA_PATH);
+
+            this.#gcpLengthData = {
+                dateTime: new Date(lines[0]),
+                disclaimer: lines.slice(1).join("\n"),
+                data
+            };
+        } catch {
+            // Swallow error.
+        }
+    }
+
     /**
      * Log the date/time of the cache or source.
      *
@@ -38,13 +83,9 @@ const gcpLengthCache = new class extends GCPLengthCache {
      * @inheritDoc
      */
     get cacheDateTime(): Date | undefined {
-        let dateTime: Date | undefined;
+        this.#loadGCPLengthData();
 
-        try {
-            dateTime = new Date(fs.readFileSync(BINARY_DATE_TIME_PATH).toString());
-        } catch {
-            dateTime = undefined;
-        }
+        const dateTime = this.#gcpLengthData?.dateTime;
 
         this.#logDateTime("Cache", dateTime);
 
@@ -54,8 +95,11 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    get cacheData(): Uint8Array {
-        return fs.readFileSync(BINARY_DATA_PATH);
+    get cacheData(): GCPLengthData {
+        this.#loadGCPLengthData();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Known to be defined.
+        return this.#gcpLengthData!;
     }
 
     /**
@@ -84,16 +128,13 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    update(_nextCheckDateTime: Date, cacheDateTime?: Date, cacheData?: Uint8Array): void {
-        if (cacheDateTime !== undefined) {
-            fs.writeFileSync(BINARY_DATE_TIME_PATH, cacheDateTime.toISOString());
-        }
-
+    update(_nextCheckDateTime: Date, _cacheDateTime?: Date, cacheData?: GCPLengthData): void {
         if (cacheData !== undefined) {
-            fs.writeFileSync(BINARY_DATA_PATH, cacheData);
+            fs.writeFileSync(BINARY_HEADER_PATH, `${cacheData.dateTime.toISOString()}\n${cacheData.disclaimer}`);
+            fs.writeFileSync(BINARY_DATA_PATH, cacheData.data);
         }
 
-        console.log(cacheDateTime !== undefined || cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
+        console.log(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
     }
 }();
 
