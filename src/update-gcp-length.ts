@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- Console application. */
 
-import { I18nEnvironments, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { FileAppDataStorage, I18nEnvironments } from "@aidc-toolkit/core";
 import {
     GCPLengthCache,
     type GCPLengthData,
@@ -21,7 +21,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
      * Constructor.
      */
     constructor() {
-        super(new LocalAppDataStorage(DATA_DIRECTORY));
+        super(new FileAppDataStorage(DATA_DIRECTORY));
     }
 
     /**
