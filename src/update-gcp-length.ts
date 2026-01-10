@@ -1,44 +1,27 @@
 /* eslint-disable no-console -- Console application. */
 
-import { I18nEnvironments, omit } from "@aidc-toolkit/core";
+import { I18nEnvironments, LocalAppDataStorage } from "@aidc-toolkit/core";
 import {
     GCPLengthCache,
     type GCPLengthData,
+    type GCPLengthSourceJSON,
     i18nGS1Init,
-    parseGCPLengthHeader,
-    PrefixManager,
-    RemoteGCPLengthCache,
-    stringifyGCPLengthHeader
+    isGCPLengthSourceJSON,
+    PrefixManager
 } from "@aidc-toolkit/gs1";
-import * as fs from "node:fs";
-import * as path from "node:path";
 
 const DATA_DIRECTORY = "docs";
 
-const BINARY_HEADER_PATH = path.resolve(DATA_DIRECTORY, RemoteGCPLengthCache.SOURCE_HEADER_FILE_NAME);
-
-const BINARY_DATA_PATH = path.resolve(DATA_DIRECTORY, RemoteGCPLengthCache.SOURCE_DATA_FILE_NAME);
-
-const JSON_DATA_PATH = path.resolve(DATA_DIRECTORY, "gcp-length.json");
+const JSON_DATA_KEY = "gcp-length";
 
 const gcpLengthCache = new class extends GCPLengthCache {
-    #gcpLengthData?: GCPLengthData;
+    #gcpLengthSourceJSON!: GCPLengthSourceJSON;
 
     /**
-     * Load GS1 Company Prefix length data if available.
+     * Constructor.
      */
-    #loadGCPLengthData(): void {
-        try {
-            const gcpLengthHeader = parseGCPLengthHeader(fs.readFileSync(BINARY_HEADER_PATH).toString());
-            const data = fs.readFileSync(BINARY_DATA_PATH);
-
-            this.#gcpLengthData = {
-                ...gcpLengthHeader,
-                data
-            };
-        } catch {
-            // Swallow error.
-        }
+    constructor() {
+        super(new LocalAppDataStorage(DATA_DIRECTORY));
     }
 
     /**
@@ -57,66 +40,51 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    get nextCheckDateTime(): undefined {
-        return undefined;
+    override get cacheDateTime(): Promise<Date | undefined> {
+        return super.cacheDateTime.then((cacheDateTime) => {
+            this.#logDateTime("Cache", cacheDateTime);
+
+            return cacheDateTime;
+        });
     }
 
     /**
      * @inheritDoc
      */
-    get cacheDateTime(): Date | undefined {
-        this.#loadGCPLengthData();
+    get sourceDateTime(): Promise<Date> {
+        return this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
+            if (!isGCPLengthSourceJSON(appData)) {
+                throw new Error("Invalid GCP length source JSON");
+            }
 
-        const dateTime = this.#gcpLengthData?.dateTime;
+            return appData;
+        }).then((gcpLengthSourceJSON) => {
+            this.#gcpLengthSourceJSON = gcpLengthSourceJSON;
 
-        this.#logDateTime("Cache", dateTime);
+            const dateTime = new Date(gcpLengthSourceJSON.GCPPrefixFormatList.date);
 
-        return dateTime;
+            this.#logDateTime("Source", dateTime);
+
+            return dateTime;
+        });
     }
 
     /**
      * @inheritDoc
      */
-    get cacheData(): GCPLengthData {
-        this.#loadGCPLengthData();
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Known to be defined.
-        return this.#gcpLengthData!;
+    get sourceData(): GCPLengthSourceJSON {
+        return this.#gcpLengthSourceJSON;
     }
 
     /**
      * @inheritDoc
      */
-    get sourceDateTime(): Date {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- File format is known.
-        const dateTime = new Date((JSON.parse(fs.readFileSync(JSON_DATA_PATH).toString()) as {
-            GCPPrefixFormatList: {
-                date: string;
-            };
-        }).GCPPrefixFormatList.date);
-
-        this.#logDateTime("Source", dateTime);
-
-        return dateTime;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    get sourceData(): string {
-        return fs.readFileSync(JSON_DATA_PATH).toString();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    update(_nextCheckDateTime: Date, _cacheDateTime?: Date, cacheData?: GCPLengthData): void {
-        if (cacheData !== undefined) {
-            fs.writeFileSync(BINARY_HEADER_PATH, stringifyGCPLengthHeader(omit(cacheData, "data")));
-            fs.writeFileSync(BINARY_DATA_PATH, cacheData.data);
-        }
-
+    override async update(nextCheckDateTime: Date, cacheDateTime?: Date, cacheData?: GCPLengthData): Promise<void> {
         console.log(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
+
+        return super.update(nextCheckDateTime, cacheDateTime, cacheData).then(async () =>
+            this.appDataStorage.delete(GCPLengthCache.NEXT_CHECK_DATE_TIME_STORAGE_KEY)
+        );
     }
 }();
 
