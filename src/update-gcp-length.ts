@@ -79,7 +79,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
             this.appDataStorage.delete(GCPLengthCache.NEXT_CHECK_DATE_TIME_STORAGE_KEY)
         );
     }
-}(new (await LocalAppDataStorage())(DATA_DIRECTORY));
+}(new (await LocalAppDataStorage)(DATA_DIRECTORY));
 
 i18nGS1Init(I18nEnvironments.CLI).then(async () =>
     PrefixManager.loadGCPLengthData(gcpLengthCache)
