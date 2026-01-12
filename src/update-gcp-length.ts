@@ -85,4 +85,5 @@ i18nGS1Init(I18nEnvironments.CLI).then(async () =>
     PrefixManager.loadGCPLengthData(gcpLengthCache)
 ).catch((e: unknown) => {
     console.error(e);
+    process.exit(1);
 });
