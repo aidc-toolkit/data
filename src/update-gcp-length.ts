@@ -44,7 +44,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    get sourceDateTime(): Promise<Date> {
+    override get sourceDateTime(): Promise<Date> {
         return this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
             if (!isGCPLengthSourceJSON(appData)) {
                 throw new Error("Invalid GCP length source JSON");
@@ -65,7 +65,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    get sourceData(): GCPLengthSourceJSON {
+    override get sourceData(): GCPLengthSourceJSON {
         return this.#gcpLengthSourceJSON;
     }
 
