@@ -1,13 +1,13 @@
 /* eslint-disable no-console -- Console application. */
 
-import { LocalAppDataStorage, I18nEnvironments } from "@aidc-toolkit/core";
+import { I18nEnvironments, LocalAppDataStorage } from "@aidc-toolkit/core";
 import {
+    GCPLength,
     GCPLengthCache,
     type GCPLengthData,
     type GCPLengthSourceJSON,
     i18nGS1Init,
-    isGCPLengthSourceJSON,
-    PrefixManager
+    isGCPLengthSourceJSON
 } from "@aidc-toolkit/gs1";
 
 const DATA_DIRECTORY = "docs";
@@ -81,8 +81,10 @@ const gcpLengthCache = new class extends GCPLengthCache {
     }
 }(new (await LocalAppDataStorage)(DATA_DIRECTORY));
 
+const gcpLength = new GCPLength(gcpLengthCache);
+
 i18nGS1Init(I18nEnvironments.CLI).then(async () =>
-    PrefixManager.loadGCPLengthData(gcpLengthCache)
+    gcpLength.load()
 ).catch((e: unknown) => {
     console.error(e);
     process.exit(1);
