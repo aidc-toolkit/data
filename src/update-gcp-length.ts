@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- Console application. */
 
-import { I18nEnvironments, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { I18nLanguageDetectors, LocalAppDataStorage } from "@aidc-toolkit/core";
 import {
     GCPLength,
     GCPLengthCache,
@@ -83,7 +83,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
 
 const gcpLength = new GCPLength(gcpLengthCache);
 
-i18nGS1Init(I18nEnvironments.CLI).then(async () =>
+i18nGS1Init(I18nLanguageDetectors.CLI).then(async () =>
     gcpLength.load()
 ).catch((e: unknown) => {
     console.error(e);
