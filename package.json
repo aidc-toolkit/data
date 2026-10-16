@@ -30,8 +30,7 @@
     "@aidc-toolkit/gs1": "^1.0.51-alpha"
   },
   "allowScripts": {
-    "esbuild@0.27.7": true,
-    "esbuild@0.28.2": true,
-    "fsevents@2.3.3": true
+    "esbuild": true,
+    "fsevents": true
   }
 }
