@@ -1,6 +1,6 @@
 {
   "name": "@aidc-toolkit/data",
-  "version": "2.0.0",
+  "version": "2.0.0-alpha",
   "description": "Data manager for AIDC Toolkit",
   "type": "module",
   "private": true,
@@ -24,10 +24,10 @@
     "update-gcp-length": "tsx src/update-gcp-length.ts"
   },
   "devDependencies": {
-    "@aidc-toolkit/dev": "^1.0.48"
+    "@aidc-toolkit/dev": "^2.0.0-alpha"
   },
   "dependencies": {
-    "@aidc-toolkit/gs1": "^1.0.51"
+    "@aidc-toolkit/gs1": "^2.0.0-alpha"
   },
   "allowScripts": {
     "esbuild": true,
