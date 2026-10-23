@@ -1,6 +1,5 @@
-/* eslint-disable no-console -- Console application. */
-
-import { I18nLanguageDetectors, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { getLogger, I18nLanguageDetectors, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { LogLevels } from "@aidc-toolkit/core/src/index.js";
 import {
     GCPLength,
     GCPLengthCache,
@@ -14,8 +13,36 @@ const DATA_DIRECTORY = "docs";
 
 const JSON_DATA_KEY = "gcp-length";
 
-const gcpLengthCache = new class extends GCPLengthCache {
-    #gcpLengthSourceJSON!: GCPLengthSourceJSON;
+const logger = getLogger(LogLevels.Info);
+
+/**
+ * Update GCP length cache.
+ */
+class UpdateGCPLengthCache extends GCPLengthCache {
+    /**
+     * GCP length source JSON.
+     */
+    #gcpLengthSourceJSON?: GCPLengthSourceJSON;
+
+    /**
+     * Get the GCP length source JSON.
+     *
+     * @returns
+     * GCP length source JSON.
+     */
+    private async getGCPLengthSourceJSON(): Promise<GCPLengthSourceJSON> {
+        if (this.#gcpLengthSourceJSON === undefined) {
+            this.#gcpLengthSourceJSON = await this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
+                if (!isGCPLengthSourceJSON(appData)) {
+                    throw new Error("Invalid GCP length source JSON");
+                }
+
+                return appData;
+            });
+        }
+
+        return this.#gcpLengthSourceJSON;
+    }
 
     /**
      * Log the date/time of the cache or source.
@@ -27,7 +54,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
      * Date/time.
      */
     #logDateTime(type: string, dateTime: Date | undefined): void {
-        console.log(`${type} date/time is ${dateTime?.toISOString()}.`);
+        logger.info(`${type} date/time is ${dateTime?.toISOString()}.`);
     }
 
     /**
@@ -65,27 +92,27 @@ const gcpLengthCache = new class extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    override get sourceData(): GCPLengthSourceJSON {
-        return this.#gcpLengthSourceJSON;
+    override get sourceData(): Promise<GCPLengthSourceJSON> {
+        return this.getGCPLengthSourceJSON();
     }
 
     /**
      * @inheritDoc
      */
     override async update(nextCheckDateTime: Date, cacheDateTime?: Date, cacheData?: GCPLengthData): Promise<void> {
-        console.log(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
+        logger.info(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
 
         return super.update(nextCheckDateTime, cacheDateTime, cacheData).then(async () =>
             this.appDataStorage.delete(GCPLengthCache.NEXT_CHECK_DATE_TIME_STORAGE_KEY)
         );
     }
-}(await LocalAppDataStorage.get(DATA_DIRECTORY));
-
-const gcpLength = new GCPLength(gcpLengthCache);
+}
 
 i18nGS1Init(I18nLanguageDetectors.CLI).then(async () =>
-    gcpLength.load()
+    LocalAppDataStorage.get(DATA_DIRECTORY)
+).then(async localAppDataStorage =>
+    new GCPLength(new UpdateGCPLengthCache(localAppDataStorage)).load()
 ).catch((e: unknown) => {
-    console.error(e);
+    logger.error("Update GCP length failed", e);
     process.exit(1);
 });

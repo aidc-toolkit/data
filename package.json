@@ -27,6 +27,7 @@
     "@aidc-toolkit/dev": "^2.0.0-alpha"
   },
   "dependencies": {
+    "@aidc-toolkit/core": "^2.0.0-alpha",
     "@aidc-toolkit/gs1": "^2.0.0-alpha"
   },
   "allowScripts": {
