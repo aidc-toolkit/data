@@ -79,7 +79,7 @@ const gcpLengthCache = new class extends GCPLengthCache {
             this.appDataStorage.delete(GCPLengthCache.NEXT_CHECK_DATE_TIME_STORAGE_KEY)
         );
     }
-}(new LocalAppDataStorage(DATA_DIRECTORY));
+}(await LocalAppDataStorage.get(DATA_DIRECTORY));
 
 const gcpLength = new GCPLength(gcpLengthCache);
 
