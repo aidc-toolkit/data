@@ -20,29 +20,9 @@ const logger = getLogger(LogLevels.Info);
  */
 class UpdateGCPLengthCache extends GCPLengthCache {
     /**
-     * GCP length source JSON.
+     * Source data.
      */
-    #gcpLengthSourceJSON?: GCPLengthSourceJSON;
-
-    /**
-     * Get the GCP length source JSON.
-     *
-     * @returns
-     * GCP length source JSON.
-     */
-    private async getGCPLengthSourceJSON(): Promise<GCPLengthSourceJSON> {
-        if (this.#gcpLengthSourceJSON === undefined) {
-            this.#gcpLengthSourceJSON = await this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
-                if (!isGCPLengthSourceJSON(appData)) {
-                    throw new Error("Invalid GCP length source JSON");
-                }
-
-                return appData;
-            });
-        }
-
-        return this.#gcpLengthSourceJSON;
-    }
+    #sourceData?: Promise<GCPLengthSourceJSON>;
 
     /**
      * Log the date/time of the cache or source.
@@ -72,16 +52,8 @@ class UpdateGCPLengthCache extends GCPLengthCache {
      * @inheritDoc
      */
     override get sourceDateTime(): Promise<Date> {
-        return this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
-            if (!isGCPLengthSourceJSON(appData)) {
-                throw new Error("Invalid GCP length source JSON");
-            }
-
-            return appData;
-        }).then((gcpLengthSourceJSON) => {
-            this.#gcpLengthSourceJSON = gcpLengthSourceJSON;
-
-            const dateTime = new Date(gcpLengthSourceJSON.GCPPrefixFormatList.date);
+        return this.sourceData.then((sourceData) => {
+            const dateTime = new Date(sourceData.GCPPrefixFormatList.date);
 
             this.#logDateTime("Source", dateTime);
 
@@ -93,7 +65,17 @@ class UpdateGCPLengthCache extends GCPLengthCache {
      * @inheritDoc
      */
     override get sourceData(): Promise<GCPLengthSourceJSON> {
-        return this.getGCPLengthSourceJSON();
+        if (this.#sourceData === undefined) {
+            this.#sourceData = this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
+                if (!isGCPLengthSourceJSON(appData)) {
+                    throw new Error("Invalid GCP length source JSON");
+                }
+
+                return appData;
+            });
+        }
+
+        return this.#sourceData;
     }
 
     /**
