@@ -1,4 +1,4 @@
-import { getLogger, I18nLanguageDetectors, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { getLogger, i18nCoreCLILanguageDetector, LocalAppDataStorage } from "@aidc-toolkit/core";
 import { LogLevels } from "@aidc-toolkit/core/src/index.js";
 import {
     GCPLength,
@@ -8,6 +8,7 @@ import {
     i18nGS1Init,
     isGCPLengthSourceJSON
 } from "@aidc-toolkit/gs1";
+import i18next from "i18next";
 
 const DATA_DIRECTORY = "docs";
 
@@ -90,7 +91,7 @@ class UpdateGCPLengthCache extends GCPLengthCache {
     }
 }
 
-i18nGS1Init(I18nLanguageDetectors.CLI).then(async () =>
+i18nGS1Init(i18next.use(i18nCoreCLILanguageDetector)).then(async () =>
     LocalAppDataStorage.get(DATA_DIRECTORY)
 ).then(async localAppDataStorage =>
     new GCPLength(new UpdateGCPLengthCache(localAppDataStorage)).load()
