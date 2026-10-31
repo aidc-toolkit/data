@@ -13,16 +13,8 @@ const DATA_DIRECTORY = "docs";
 
 const JSON_DATA_KEY = "gcp-length";
 
-const logger = getLogger(LogLevels.Info);
-
-/**
- * Update GCP length cache.
- */
-class UpdateGCPLengthCache extends GCPLengthCache {
-    /**
-     * Source data.
-     */
-    #sourceData?: Promise<GCPLengthSourceJSON>;
+const gcpLengthCache = new class extends GCPLengthCache {
+    #gcpLengthSourceJSON!: GCPLengthSourceJSON;
 
     /**
      * Log the date/time of the cache or source.
@@ -34,7 +26,7 @@ class UpdateGCPLengthCache extends GCPLengthCache {
      * Date/time.
      */
     #logDateTime(type: string, dateTime: Date | undefined): void {
-        logger.info(`${type} date/time is ${dateTime?.toISOString()}.`);
+        console.log(`${type} date/time is ${dateTime?.toISOString()}.`);
     }
 
     /**
@@ -52,8 +44,16 @@ class UpdateGCPLengthCache extends GCPLengthCache {
      * @inheritDoc
      */
     override get sourceDateTime(): Promise<Date> {
-        return this.sourceData.then((sourceData) => {
-            const dateTime = new Date(sourceData.GCPPrefixFormatList.date);
+        return this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
+            if (!isGCPLengthSourceJSON(appData)) {
+                throw new Error("Invalid GCP length source JSON");
+            }
+
+            return appData;
+        }).then((gcpLengthSourceJSON) => {
+            this.#gcpLengthSourceJSON = gcpLengthSourceJSON;
+
+            const dateTime = new Date(gcpLengthSourceJSON.GCPPrefixFormatList.date);
 
             this.#logDateTime("Source", dateTime);
 
@@ -64,37 +64,29 @@ class UpdateGCPLengthCache extends GCPLengthCache {
     /**
      * @inheritDoc
      */
-    override get sourceData(): Promise<GCPLengthSourceJSON> {
-        if (this.#sourceData === undefined) {
-            this.#sourceData = this.appDataStorage.read(JSON_DATA_KEY).then((appData) => {
-                if (!isGCPLengthSourceJSON(appData)) {
-                    throw new Error("Invalid GCP length source JSON");
-                }
-
-                return appData;
-            });
-        }
-
-        return this.#sourceData;
+    override get sourceData(): GCPLengthSourceJSON {
+        return this.#gcpLengthSourceJSON;
     }
 
     /**
      * @inheritDoc
      */
     override async update(nextCheckDateTime: Date, cacheDateTime?: Date, cacheData?: GCPLengthData): Promise<void> {
-        logger.info(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
+        console.log(cacheData !== undefined ? "Cache updated." : "Cache unchanged.");
 
         return super.update(nextCheckDateTime, cacheDateTime, cacheData).then(async () =>
             this.appDataStorage.delete(GCPLengthCache.NEXT_CHECK_DATE_TIME_STORAGE_KEY)
         );
     }
-}
+}(new (await LocalAppDataStorage)(DATA_DIRECTORY));
+
+const gcpLength = new GCPLength(gcpLengthCache);
 
 i18nGS1Init(i18next.use(i18nCoreCLILanguageDetector)).then(async () =>
     LocalAppDataStorage.get(DATA_DIRECTORY)
 ).then(async localAppDataStorage =>
     new GCPLength(new UpdateGCPLengthCache(localAppDataStorage)).load()
 ).catch((e: unknown) => {
-    logger.error("Update GCP length failed", e);
+    console.error(e);
     process.exit(1);
 });
