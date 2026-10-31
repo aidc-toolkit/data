@@ -1,6 +1,4 @@
-/* eslint-disable no-console -- Console application. */
-
-import { I18nLanguageDetectors, LocalAppDataStorage } from "@aidc-toolkit/core";
+import { getLogger, i18nCoreCLILanguageDetector, LocalAppDataStorage, LogLevels } from "@aidc-toolkit/core";
 import {
     GCPLength,
     GCPLengthCache,
@@ -9,6 +7,7 @@ import {
     i18nGS1Init,
     isGCPLengthSourceJSON
 } from "@aidc-toolkit/gs1";
+import i18next from "i18next";
 
 const DATA_DIRECTORY = "docs";
 
@@ -83,8 +82,10 @@ const gcpLengthCache = new class extends GCPLengthCache {
 
 const gcpLength = new GCPLength(gcpLengthCache);
 
-i18nGS1Init(I18nLanguageDetectors.CLI).then(async () =>
-    gcpLength.load()
+i18nGS1Init(i18next.use(i18nCoreCLILanguageDetector)).then(async () =>
+    LocalAppDataStorage.get(DATA_DIRECTORY)
+).then(async localAppDataStorage =>
+    new GCPLength(new UpdateGCPLengthCache(localAppDataStorage)).load()
 ).catch((e: unknown) => {
     console.error(e);
     process.exit(1);
