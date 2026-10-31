@@ -1,5 +1,4 @@
-import { getLogger, i18nCoreCLILanguageDetector, LocalAppDataStorage } from "@aidc-toolkit/core";
-import { LogLevels } from "@aidc-toolkit/core/src/index.js";
+import { getLogger, i18nCoreCLILanguageDetector, LocalAppDataStorage, LogLevels } from "@aidc-toolkit/core";
 import {
     GCPLength,
     GCPLengthCache,
