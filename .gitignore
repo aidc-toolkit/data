@@ -1,4 +1,4 @@
 /**/.DS_Store
-/.npmrc
+/.npm*
 /node_modules/
 /docs/gcp-length.json
