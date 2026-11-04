@@ -1,6 +1,6 @@
 {
   "name": "@aidc-toolkit/data",
-  "version": "1.0.54-beta",
+  "version": "1.0.54",
   "description": "Data manager for AIDC Toolkit",
   "type": "module",
   "private": true,
@@ -27,7 +27,7 @@
     "@aidc-toolkit/dev": "^1.0.50"
   },
   "dependencies": {
-    "@aidc-toolkit/gs1": "1.0.54-beta"
+    "@aidc-toolkit/gs1": "^1.0.54"
   },
   "allowScripts": {
     "esbuild": true,
